@@ -1,6 +1,12 @@
 ---
-- name: Install dependencies for rbenv
+- name: Install dependencies for rbenv (Debian/Ubuntu)
   apt: pkg=git
+  when: ansible_os_family == "Debian"
+  tags: rbenv
+
+- name: Install dependencies for rbenv (RedHat/CentOS)
+  yum: name=git
+  when: ansible_os_family == "RedHat"
   tags: rbenv
 
 - name: Install rbenv
@@ -13,16 +19,18 @@
   sudo: yes
   sudo_user: "{{ rbenv.user }}"
   lineinfile: >
-    dest="~/.profile"
+    dest="~/.bash_profile"
     line="export PATH=$HOME/.rbenv/bin:$PATH"
+    create=yes
   tags: rbenv
 
-- name: Eval rbenv init in ~/.profile
+- name: Eval rbenv init in ~/.bash_profile
   sudo: yes
   sudo_user: "{{ rbenv.user }}"
   lineinfile: >
-    dest="~/.profile"
-    line='eval "$(rbenv init -)"'
+    dest="~/.bash_profile"
+    line="eval \"$(rbenv init -)\""
+    create=yes
   tags: rbenv
 
 - name: Copy .gemrc to ~/.gemrc
@@ -34,18 +42,36 @@
     - .gemrc
   tags: rbenv
 
-- name: Install dependencies for ruby-build
-  apt: pkg={{ item }}
+- name: Install dependencies for ruby-build (Debian/Ubuntu)
+  apt: pkg="{{ item }}"
   with_items:
     - autoconf
     - bison
     - build-essential
     - libssl-dev
     - libyaml-dev
-    - libreadline6
     - libreadline6-dev
-    - zlib1g
     - zlib1g-dev
+    - libncurses5-dev
+    - libffi-dev
+    - libgdbm3
+    - libgdbm-dev
+  when: ansible_os_family == "Debian"
+  tags: rbenv
+
+- name: Install dependencies for ruby-build (RedHat/CentOS)
+  yum:
+    name: "{{ item }}"
+  with_items:
+    - gcc
+    - openssl-devel
+    - libyaml-devel
+    - libffi-devel
+    - readline-devel
+    - zlib-devel
+    - gdbm-devel
+    - ncurses-devel
+  when: ansible_os_family == "RedHat"
   tags: rbenv
 
 - name: Install ruby-build as rbenv plugin
